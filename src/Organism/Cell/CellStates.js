@@ -59,18 +59,47 @@ class Eye extends CellState {
     render(ctx, cell, size) {
         ctx.fillStyle = this.color;
         ctx.fillRect(cell.x, cell.y, size, size);
-        if(size == 1)
-            return;
-        var half = size/2;
-        var x = -(size)/8
-        var y = -half;
-        var h = size/2 + size/4;
-        var w = size/4;
-        ctx.translate(cell.x+half, cell.y+half);
-        ctx.rotate((cell.cell_owner.getAbsoluteDirection() * 90) * Math.PI / 180);
+
+        if (size === 1) return;
+
+        // compute vertical and horizontal slit dimensions
+        const wVert = size >> 2;               // narrow width ~ size/4
+        const hVert = (size * 3) >> 2;         // tall height ~ size*0.75
+        const wHorz = hVert;                   // wide slit ~ size*0.75
+        const hHorz = wVert;                   // short height ~ size/4
+
+        let sx, sy, w, h; // slit rect
+        const dir = cell.cell_owner.getAbsoluteDirection(); // 0-3 (up, right, down, left)
+
+        switch (dir) {
+            case 0: // up
+                w = wVert; h = hVert;
+                sx = cell.x + ((size - w) >> 1);
+                sy = cell.y;
+                break;
+            case 1: // right
+                w = wHorz; h = hHorz;
+                sx = cell.x + size - w;
+                sy = cell.y + ((size - h) >> 1);
+                break;
+            case 2: // down
+                w = wVert; h = hVert;
+                sx = cell.x + ((size - w) >> 1);
+                sy = cell.y + size - h;
+                break;
+            case 3: // left
+                w = wHorz; h = hHorz;
+                sx = cell.x;
+                sy = cell.y + ((size - h) >> 1);
+                break;
+            default:
+                w = wVert; h = hVert;
+                sx = cell.x;
+                sy = cell.y;
+        }
+
         ctx.fillStyle = this.slit_color;
-        ctx.fillRect(x, y, w, h);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillRect(sx, sy, w, h);
     }
 }
 

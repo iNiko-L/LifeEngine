@@ -25,9 +25,9 @@
 				</div>
 				<img src="./img/title.png" alt="Life Engine">
 				<h3>Simulation Speed</h3>
-				<input id="slider" type="range" min="1" max="300" value="60">
 				<button class='pause-button' title="Play/Pause. Hotkey: Spacebar"><i class="fa fa-pause"></i></button>
 				<button class="headless" title="Toggle rendering. Hotkey: H"><i class="fa fa-eye-slash"></i></button>
+				<input id="slider" type="range" min="1" max="100000" value="60">
 				<p id='fps'>Target FPS: 60</p>
 				<p id='fps-actual'></p>
 				<button id='reset-env' title='Restarts simulation with default organism.'>Reset</button>
@@ -63,6 +63,10 @@
 							<div class='cell-legend-type' id='eye' title="Eye: Observes cells and decides movement."></div>
 							<div class='cell-legend-type' id='food' title="Food: Not part of an organism. Once an organism has eaten enough food, it will reproduce."></div>
 							<div class='cell-legend-type' id='wall' title="Wall: Not part of an organism. Blocks movement and reproduction."></div>
+						</div>
+						<div id="color-scheme-container">
+							<label for="color-scheme-select">Color Scheme:</label>
+							<select id="color-scheme-select"></select>
 						</div><br>
 					</div>
 					<div class='right-half'>
@@ -328,6 +332,7 @@
 			<button class="edit-mode-btn click-kill" id="click-kill" title="Click to kill. Hotkey: G"><i class="fa fa-skull"></i></button>
 			<button class="headless" title="Toggle rendering. Hotkey: H"><i class="fa fa-eye-slash"></i></button>
 			<button class='pause-button' title="Play/Pause. Hotkey: Spacebar"><i class="fa fa-pause"></i></button>
+			<span id="fps-hot"></span>
 		</div>
 		<div id="headless-notification">
 			<i class="fa fa-eye-slash" ></i>

@@ -3,6 +3,7 @@ const Modes = require("./ControlModes");
 const StatsPanel = require("../Stats/StatsPanel");
 const WorldConfig = require("../WorldConfig");
 const LoadController = require("./LoadController");
+const {ColorScheme, color_scheme_names} = require("../Rendering/ColorScheme");
 
 class ControlPanel {
     constructor(engine) {
@@ -14,6 +15,7 @@ class ControlPanel {
         this.defineHyperparameterControls();
         this.defineWorldControls();
         this.defineModeControls();
+        this.defineColorSchemeControls();
         this.fps = engine.fps;
         this.organism_record=0;
         this.env_controller = this.engine.env.controller;
@@ -121,13 +123,11 @@ class ControlPanel {
     defineEngineSpeedControls(){
         this.slider = document.getElementById("slider");
         this.slider.oninput = function() {
-            const max_fps = 300;
             this.fps = parseInt(this.slider.value);
-            if (this.fps>=max_fps) this.fps = 1000;
             if (this.engine.running) {
                 this.changeEngineSpeed(this.fps);
             }
-            let text = this.fps >= max_fps ? 'MAX' : this.fps;
+            let text = this.fps;
             $('#fps').text("Target FPS: "+text);
         }.bind(this);
 
@@ -464,6 +464,14 @@ class ControlPanel {
         };
     }
 
+    defineColorSchemeControls() {
+        const select = $('#color-scheme-select');
+        if (!select.length) return;
+        color_scheme_names.forEach(name => select.append(`<option value="${name}">${name}</option>`));
+        select.val('neon');
+        select.change(function() { ColorScheme.loadColorScheme(this.value); });
+    }
+
     setPaused(paused) {
         if (paused) {
             $('.pause-button').find("i").removeClass("fa-pause");
@@ -523,6 +531,7 @@ class ControlPanel {
 
     update(delta_time) {
         $('#fps-actual').text("Actual FPS: " + Math.floor(this.engine.actual_fps));
+        $('#fps-hot').text(Math.floor(this.engine.actual_fps)+' FPS');
         $('#reset-count').text("Auto reset count: " + this.engine.env.reset_count);
         this.stats_panel.updateDetails();
         if (WorldConfig.headless)
