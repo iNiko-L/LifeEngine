@@ -11,8 +11,9 @@ const SerializeHelper = require('../Utils/SerializeHelper');
 const Species = require('../Stats/Species');
 
 class WorldEnvironment extends Environment{
-    constructor(cell_size) {
+    constructor(engine, cell_size) {
         super();
+        this.engine = engine;
         this.renderer = new Renderer('env-canvas', 'env', cell_size);
         this.controller = new EnvironmentController(this, this.renderer.canvas);
         this.num_rows = Math.ceil(this.renderer.height / cell_size);
@@ -155,7 +156,12 @@ class WorldEnvironment extends Environment{
     reset(confirm_reset=true, reset_life=true) {
         if (confirm_reset && !confirm('The current environment will be lost. Proceed?'))
             return false;
-
+        let restart = false;
+        if (this.engine.running) {
+            this.engine.last_fps = this.engine.fps;
+            this.engine.stop();
+            restart = true;
+        }
         this.organisms = [];
         this.grid_map.fillGrid(CellStates.empty, !WorldConfig.clear_walls_on_reset);
         this.renderer.renderFullGrid(this.grid_map.grid);
@@ -164,6 +170,8 @@ class WorldEnvironment extends Environment{
         FossilRecord.clear_record();
         if (reset_life)
             this.OriginOfLife();
+        if (restart)
+            this.engine.start(this.engine.last_fps);
         return true;
     }
 

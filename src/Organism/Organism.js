@@ -174,20 +174,22 @@ class Organism {
         return false;
     }
 
-    attemptRotate() {
+    attemptRotate(rotation=null) {
         if(!this.can_rotate){
             this.direction = Directions.getRandomDirection();
             this.move_count = 0;
             return true;
         }
-        var new_rotation = Directions.getRandomDirection();
-        if(this.isClear(this.c, this.r, new_rotation)){
+        if(rotation == null){
+            rotation = Directions.getRandomDirection();
+        }
+        if(this.isClear(this.c, this.r, rotation)){
             for (var cell of this.anatomy.cells) {
                 var real_c = this.c + cell.rotatedCol(this.rotation);
                 var real_r = this.r + cell.rotatedRow(this.rotation);
                 this.env.changeCell(real_c, real_r, CellStates.empty, null);
             }
-            this.rotation = new_rotation;
+            this.rotation = rotation;
             this.direction = Directions.getRandomDirection();
             this.updateGrid();
             this.move_count = 0;
@@ -292,21 +294,60 @@ class Organism {
         }
         
         if (this.anatomy.is_mover) {
-            this.move_count++;
-            var changed_dir = false;
-            if (this.ignore_brain_for == 0){
-                changed_dir = this.brain.decide();
-            }  
-            else{
-                this.ignore_brain_for --;
+            const Decision = Brain.Decision;
+            let brain_decision = Decision.neutral;
+            let brain_direction = 0;
+            if (this.anatomy.has_eyes) {
+                let {decision, move_direction} = this.brain.decide();
+                brain_decision = decision;
+                brain_direction = move_direction;
             }
-            var moved = this.attemptMove();
-            if ((this.move_count > this.move_range && !changed_dir) || !moved){
-                var rotated = this.attemptRotate();
-                if (!rotated) {
-                    this.changeDirection(Directions.getRandomDirection());
-                    if (changed_dir)
-                        this.ignore_brain_for = this.move_range + 1;
+            let dontmove = false;
+            switch (brain_decision) {
+                case Decision.neutral:
+                    // move move_range times, then randomly rotate/change direction
+                    if (this.move_count > this.move_range) {
+                        this.attemptRotate();
+                        this.changeDirection(Directions.getRandomDirection());
+                        this.move_count = 0;
+                    }
+                    break;
+                case Decision.chase:
+                    this.changeDirection(brain_direction);
+                    break;
+                case Decision.retreat:
+                    this.changeDirection(Directions.getOppositeDirection(brain_direction));
+                    break;
+                case Decision.move_left:
+                    this.changeDirection(Directions.getLeftDirection(brain_direction));
+                    break;
+                case Decision.move_right:
+                    this.changeDirection(Directions.getRightDirection(brain_direction));
+                    break;
+                case Decision.turn_left:
+                    // rotate left based on current rotation, brain direction irrelavent
+                    this.attemptRotate(Directions.getLeftDirection(this.direction));
+                    dontmove = true;
+                    break;
+                case Decision.turn_right:
+                    this.attemptRotate(Directions.getRightDirection(this.direction));
+                    dontmove = true;
+                    break;
+                case Decision.stop:
+                    dontmove = true;
+                    break;
+            }
+            if (!dontmove) {
+                let moved = this.attemptMove();
+                if (!moved) {
+                    // if stuck, try to rotate or change direction
+                    let rotated = this.attemptRotate();
+                    if (!rotated) {
+                        this.changeDirection(Directions.getRandomDirection());
+                    }
+                }
+                else {
+                    this.move_count++;
                 }
             }
         }

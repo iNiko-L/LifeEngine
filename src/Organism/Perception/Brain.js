@@ -6,11 +6,14 @@ const Decision = {
     neutral: 0,
     retreat: 1,
     chase: 2,
-    getRandom: function(){
-        return Math.floor(Math.random() * 3);
-    },
-    getRandomNonNeutral: function() {
-        return Math.floor(Math.random() * 2)+1;
+    move_left: 3,
+    move_right: 4,
+    stop: 5,
+    turn_left: 6,
+    turn_right: 7,
+    getRandom: function() {
+        let range = Hyperparams.can_rotate ? 7 : 5;
+        return Math.floor(Math.random() * range);
     }
 }
 
@@ -52,10 +55,10 @@ class Brain {
     }
 
     decide() {
-        var decision = Decision.neutral;
-        var closest = Hyperparams.lookRange + 1;
-        var move_direction = 0;
-        for (var obs of this.observations) {
+        let decision = Decision.neutral;
+        let closest = Hyperparams.lookRange + 1;
+        let move_direction = 0;
+        for (let obs of this.observations) {
             if (obs.cell == null || obs.cell.owner == this.owner) {
                 continue;
             }
@@ -66,20 +69,12 @@ class Brain {
             }
         }
         this.observations = [];
-        if (decision == Decision.chase) {
-            this.owner.changeDirection(move_direction);
-            return true;
-        }
-        else if (decision == Decision.retreat) {
-            this.owner.changeDirection(Directions.getOppositeDirection(move_direction));
-            return true;
-        }
-        return false;
+        return {decision, move_direction};
     }
 
     mutate() {
         this.decisions[CellStates.getRandomName()] = Decision.getRandom();
-        this.decisions[CellStates.empty.name] = Decision.neutral; // if the empty cell has a decision it gets weird
+        // this.decisions[CellStates.empty.name] = Decision.neutral; // if the empty cell has a decision it gets weird
     }
     
     serialize() {

@@ -4,7 +4,7 @@ const color_schemes = {
     "neon":{
         "empty":"#0E1318",
         "food":"#2F7AB7",
-        "wall":"gray",
+        "wall":"white",
         "mouth":"#DEB14D",
         "producer":"#15DE59",
         "mover":"#60D4FF",
@@ -47,6 +47,18 @@ const color_schemes = {
         "killer":"#992E5E",
         "armor":"#5632B5",
         "eye":"#8892B3",
+        "eye-slit": "black"
+    },
+    "grayscale":{
+        "empty":"black",
+        "food":"#777777",
+        "wall":"#EEEEEE",
+        "mouth":"#FFFFFF",
+        "producer":"#CCCCCC",
+        "mover":"#BBBBBB",
+        "killer":"#AAAAAA",
+        "armor":"#999999",
+        "eye":"#888888",
         "eye-slit": "black"
     }
 }

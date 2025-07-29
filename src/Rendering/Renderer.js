@@ -33,6 +33,7 @@ class Renderer {
     }
 
     renderFullGrid(grid) {
+        this.clearUpdates();
         for (var col of grid) {
             for (var cell of col){
                 this.renderCell(cell);
@@ -102,6 +103,12 @@ class Renderer {
         if (clear_to_highlight) {
             this.cells_to_highlight.clear();
         }
+    }
+
+    clearUpdates() {
+        this.cells_to_render.clear();
+        this.cells_to_highlight.clear();
+        this.highlighted_cells.clear();
     }
 }
 

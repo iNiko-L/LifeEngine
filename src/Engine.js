@@ -9,7 +9,7 @@ const SAFE_STEPS_PER_TICK = 10;
 class Engine {
     constructor(){
         this.fps = 60;
-        this.env = new WorldEnvironment(5);
+        this.env = new WorldEnvironment(this, 5);
         this.organism_editor = new OrganismEditor();
         this.controlpanel = new ControlPanel(this);
         ColorScheme.setEnvironment(this.env, this.organism_editor);
@@ -56,7 +56,7 @@ class Engine {
             this.accum_ms += elapsed;
             let steps = 0;
 
-            // Pack many sim steps with no timeout
+            // Pack many sim steps between timeouts
             let start_time = Date.now();
             while (this.accum_ms >= this.step_ms) {
                 this.environmentUpdate();

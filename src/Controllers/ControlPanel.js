@@ -8,6 +8,7 @@ const {ColorScheme, color_scheme_names} = require("../Rendering/ColorScheme");
 class ControlPanel {
     constructor(engine) {
         this.engine = engine;
+        this.fps = engine.fps;
         this.defineMinMaxControls();
         this.defineHotkeys();
         this.defineEngineSpeedControls();
@@ -16,7 +17,6 @@ class ControlPanel {
         this.defineWorldControls();
         this.defineModeControls();
         this.defineColorSchemeControls();
-        this.fps = engine.fps;
         this.organism_record=0;
         this.env_controller = this.engine.env.controller;
         this.editor_controller = this.engine.organism_editor.controller;
@@ -122,13 +122,39 @@ class ControlPanel {
 
     defineEngineSpeedControls(){
         this.slider = document.getElementById("slider");
-        this.slider.oninput = function() {
-            this.fps = parseInt(this.slider.value);
-            if (this.engine.running) {
-                this.changeEngineSpeed(this.fps);
+
+        // helper mappings
+        const sliderToFps = (val) => {
+            val = parseFloat(val);
+            if (val <= 50) {
+                // map 1..50 -> 1..120 linearly
+                const ratio = (val - 1) / 49; // 0..1
+                return Math.round(1 + ratio * 119);
             }
-            let text = this.fps;
-            $('#fps').text("Target FPS: "+text);
+            const t = (val - 50) / 50; // 0-1
+            const exp = 120 * Math.pow(10000 / 120, t);
+            return Math.round(exp);
+        };
+
+        const fpsToSlider = (fps) => {
+            if (fps <= 120) {
+                return 1 + ((fps - 1) * 49) / 119;
+            }
+            const t = Math.log(fps / 120) / Math.log(10000 / 120); // 0-1
+            return 50 + t * 50;
+        };
+
+        // initialise slider position from current fps and label
+        this.slider.value = fpsToSlider(this.fps);
+        $('#fps').text("Target FPS: "+this.fps);
+
+        this.slider.oninput = function() {
+            const newFps = sliderToFps(this.slider.value);
+            this.fps = newFps;
+            if (this.engine.running) {
+                this.changeEngineSpeed(newFps);
+            }
+            $('#fps').text("Target FPS: "+newFps);
         }.bind(this);
 
         $('.pause-button').click(function() {
@@ -184,6 +210,7 @@ class ControlPanel {
                 return;
             var cell_size = $('#cell-size').val();
             var fill_window = $('#fill-window').is(":checked");
+            this.setPaused(true);
             if (fill_window) {
                 this.engine.env.resizeFillWindow(cell_size);
             }
@@ -192,9 +219,9 @@ class ControlPanel {
                 var rows = $('#row-input').val();
                 this.engine.env.resizeGridColRow(cell_size, cols, rows);
             }
-            this.engine.env.reset(false);
+            this.engine.env.reset(false, true);
             this.stats_panel.reset();
-            
+            this.setPaused(false);
         }.bind(this));
 
         $('#auto-reset').change(function() {
@@ -480,7 +507,6 @@ class ControlPanel {
                 this.engine.stop();
         }
         else if (!paused) {
-            
             $('.pause-button').find("i").addClass("fa-pause");
             $('.pause-button').find("i").removeClass("fa-play");
             if (!this.engine.running)
