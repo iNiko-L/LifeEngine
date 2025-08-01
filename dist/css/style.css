@@ -142,7 +142,7 @@ input:hover,input:active {
 }
 .editor-buttons {
     display: grid;
-    grid-template-rows: 3;
+    grid-template-rows: auto;
     grid-template-columns: 1;
     height: fit-content;
 }
@@ -399,4 +399,53 @@ input:hover,input:active {
 }
 #load-panel-title * {
     display: inline;
+}
+
+/* Brain Editor Window */
+.brain-editor-window {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    left: 33.33%;
+    width: 66.67%;
+    height: calc(100% + 50px);
+    background-color: var(--panel-bg);
+    border: 5px solid var(--border);
+    border-bottom: 0;
+    border-radius: 15px 15px 0 0;
+    box-sizing: border-box;
+    padding: 10px;
+    display: none;
+}
+
+.brain-editor-btn {
+    margin-top: 5px;
+}
+
+#brain-editor-window #close-brain-editor {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+/* Ensure organism details do not overflow */
+#organism-details,
+#edit-organism-details {
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.tab .left-half,
+.tab .right-half,
+.control-set {
+    box-sizing: border-box;
+}
+
+/* Allow inner halves to scroll instead of enlarging */
+.tab .left-half,
+.tab .right-half {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 220px;
 }

@@ -17,6 +17,7 @@ class ControlPanel {
         this.defineWorldControls();
         this.defineModeControls();
         this.defineColorSchemeControls();
+        this.defineBrainEditorControls();
         this.organism_record=0;
         this.env_controller = this.engine.env.controller;
         this.editor_controller = this.engine.organism_editor.controller;
@@ -149,13 +150,27 @@ class ControlPanel {
         $('#fps').text("Target FPS: "+this.fps);
 
         this.slider.oninput = function() {
-            const newFps = sliderToFps(this.slider.value);
+            let newFps;
+            let fpsText;
+            if (this.slider.value == 100) {
+                newFps = 10000000;
+                fpsText = "MAXIMUM OVERDRIVE";
+            } else {
+                newFps = sliderToFps(this.slider.value);
+                fpsText = newFps;
+            }
+            
             this.fps = newFps;
             if (this.engine.running) {
                 this.changeEngineSpeed(newFps);
             }
-            $('#fps').text("Target FPS: "+newFps);
+            $('#fps').text("Target FPS: " + fpsText);
         }.bind(this);
+
+        // check initial value
+        if (this.slider.value == 100) {
+            this.slider.oninput();
+        }
 
         $('.pause-button').click(function() {
             // toggle pause
@@ -191,7 +206,7 @@ class ControlPanel {
                 self.stats_panel.startAutoRender();
             }
             else if (this.id === 'editor') {
-                self.editor_controller.refreshDetailsPanel();
+                self.editor_controller.setEditorPanel();
             }
             self.tab_id = this.id;
         });
@@ -421,7 +436,7 @@ class ControlPanel {
         $('.edit-mode-btn').click( function() {
             $('#cell-selections').css('display', 'none');
             $('#organism-options').css('display', 'none');
-            self.editor_controller.setDetailsPanel();
+            self.editor_controller.setEditorPanel();
             switch(this.id) {
                 case "food-drop":
                     self.setMode(Modes.FoodDrop);
@@ -435,9 +450,7 @@ class ControlPanel {
                 case "select":
                     self.setMode(Modes.Select);
                     break;
-                case "edit":
-                    self.setMode(Modes.Edit);
-                    break;
+                
                 case "drop-org":
                     self.setMode(Modes.Clone);
                     break;
@@ -499,6 +512,47 @@ class ControlPanel {
         select.change(function() { ColorScheme.loadColorScheme(this.value); });
     }
 
+    // Brain Editor Controls
+    defineBrainEditorControls() {
+                // Replace brain detail panels with a single Brain-edit button while
+        // retaining the original .brain-details wrapper so existing visibility
+        // logic still works.
+        const btnHtml = '<button class="brain-editor-btn" title="Edit Brain">Brain <i class="fa fa-brain"></i></button>';
+
+        // Ensure each details section has a .brain-details container we can reuse.
+        ['#organism-details', '#edit-organism-details'].forEach(sel => {
+            let cont = $(sel + ' .brain-details');
+            if (!cont.length) {
+                $(sel).append('<div class="brain-details"></div>');
+                cont = $(sel + ' .brain-details');
+            }
+            cont.empty().append(btnHtml);
+        });
+
+        if (!$('#brain-editor-window').length) {
+            $('.control-panel').append(`
+                <div id="brain-editor-window" class="brain-editor-window">
+                    <div id="brain-info" class="brain-info"></div>
+                    <button id="close-brain-editor"><i class="fa fa-times"></i></button>
+                </div>`);
+        }
+
+        this.brain_editor_open = false;
+
+        $('.brain-editor-btn').click(() => { this.toggleBrainEditor(); });
+        $('#close-brain-editor').click(() => { this.toggleBrainEditor(false); });
+    }
+
+    toggleBrainEditor(show = undefined) {
+        const win = $('#brain-editor-window');
+        if (!win.length) return;
+        if (show === undefined) {
+            show = !this.brain_editor_open;
+        }
+        win.css('display', show ? 'block' : 'none');
+        this.brain_editor_open = show;
+    }
+
     setPaused(paused) {
         if (paused) {
             $('.pause-button').find("i").removeClass("fa-pause");
@@ -518,10 +572,6 @@ class ControlPanel {
         this.env_controller.mode = mode;
         this.editor_controller.mode = mode;
 
-        if (mode == Modes.Edit) {
-            this.editor_controller.setEditorPanel();
-        }
-
         if (mode == Modes.Clone) {
             this.env_controller.org_to_clone = this.engine.organism_editor.getCopyOfOrg();
         }
@@ -530,7 +580,7 @@ class ControlPanel {
     setEditorOrganism(org) {
         this.engine.organism_editor.setOrganismToCopyOf(org);
         this.editor_controller.clearDetailsPanel();
-        this.editor_controller.setDetailsPanel();
+        this.editor_controller.setEditorPanel();
     }
 
     changeEngineSpeed(change_val) {

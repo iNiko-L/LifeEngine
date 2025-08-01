@@ -88,10 +88,10 @@ class Renderer {
 
     renderCellHighlight(cell, color="yellow") {
         this.renderCell(cell);
-        this.ctx.fillStyle = color;
-        this.ctx.globalAlpha = 0.5;
-        this.ctx.fillRect(cell.x, cell.y, this.cell_size, this.cell_size);
-        this.ctx.globalAlpha = 1;
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = this.cell_size * 0.2;
+        this.ctx.strokeRect(cell.x + this.cell_size * 0.1, cell.y + this.cell_size * 0.1, 
+            this.cell_size * 0.8, this.cell_size * 0.8);
         this.highlighted_cells.add(cell);
     }
 

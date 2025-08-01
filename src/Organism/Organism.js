@@ -38,9 +38,7 @@ class Organism {
             //deep copy parent cells
             this.anatomy.addInheritCell(c);
         }
-        if(parent.anatomy.is_mover && parent.anatomy.has_eyes) {
-            this.brain.copy(parent.brain);
-        }
+        this.brain.copy(parent.brain);
     }
 
     // amount of food required before it can reproduce
@@ -326,11 +324,11 @@ class Organism {
                     break;
                 case Decision.turn_left:
                     // rotate left based on current rotation, brain direction irrelavent
-                    this.attemptRotate(Directions.getLeftDirection(this.direction));
+                    this.attemptRotate(Directions.getLeftDirection(this.rotation));
                     dontmove = true;
                     break;
                 case Decision.turn_right:
-                    this.attemptRotate(Directions.getRightDirection(this.direction));
+                    this.attemptRotate(Directions.getRightDirection(this.rotation));
                     dontmove = true;
                     break;
                 case Decision.stop:

@@ -10,7 +10,7 @@ const FossilRecord = require("../Stats/FossilRecord");
 class EditorController extends CanvasController{
     constructor(env, canvas) {
         super(env, canvas);
-        this.mode = Modes.None;
+        this.mode = Modes.Edit;
         this.edit_cell_type = null;
         this.highlight_org = false;
         this.defineCellTypeSelection();
@@ -34,8 +34,7 @@ class EditorController extends CanvasController{
     }
 
     editOrganism() {
-        if (this.edit_cell_type == null || this.mode != Modes.Edit)
-            return;
+        if (this.edit_cell_type == null) return;
         if (this.left_click){
             if(this.edit_cell_type == CellStates.eye && this.cur_cell.state == CellStates.eye) {
                 var loc_cell = this.getCurLocalCell();
@@ -62,6 +61,7 @@ class EditorController extends CanvasController{
         else {
             $('#unnatural-org-warning').css('display', 'block');
         }
+        this.updateBrainInfo();
     }
 
     defineCellTypeSelection() {
@@ -94,7 +94,6 @@ class EditorController extends CanvasController{
     }
 
     defineEditorDetails() {
-        this.details_html = $('#organism-details');
         this.edit_details_html = $('#edit-organism-details');
 
         this.decision_names = ["ignore", "move away", "move towards"];
@@ -145,52 +144,18 @@ class EditorController extends CanvasController{
     loadOrg(org) {
         this.env.clear();
         this.env.organism.loadRaw(org);
-        this.refreshDetailsPanel();
+        this.setEditorPanel();
         this.env.organism.updateGrid();
         this.env.renderFull();
         this.env.organism.species = new Species(this.env.organism.anatomy, null, 0);
         if (org.species_name)
             this.env.organism.species.name = org.species_name;
-        if (this.mode === Modes.Clone)
-            $('#drop-org').click();
     }
 
     clearDetailsPanel() {
-        $('#organism-details').css('display', 'none');
+        this.updateDetails();
         $('#edit-organism-details').css('display', 'none');
         $('#randomize-organism-details').css('display', 'none');
-    }
-
-    refreshDetailsPanel() {
-        if (this.mode === Modes.Edit)
-            this.setEditorPanel();
-        else
-            this.setDetailsPanel();
-
-    }
-
-    setDetailsPanel() {
-        this.clearDetailsPanel();
-        var org = this.env.organism;
-        
-        this.updateDetails();
-        $('#move-range').text("Move Range: "+org.move_range);
-        $('#mutation-rate').text("Mutation Rate: "+org.mutability);
-       
-		if (Hyperparams.useGlobalMutability) {
-            $('#mutation-rate').css('display', 'none');
-        }
-        else {
-            $('#mutation-rate').css('display', 'block');
-        }
-
-        this.setMoveRangeVisibility();
-
-        if (this.setBrainPanelVisibility()) {
-            this.setBrainDetails();
-
-        }
-        $('#organism-details').css('display', 'block');
     }
 
     setEditorPanel() {
@@ -216,6 +181,7 @@ class EditorController extends CanvasController{
         }
 
         $('#cell-selections').css('display', 'grid');
+        this.updateBrainInfo();
         $('#edit-organism-details').css('display', 'block');
     }
 
@@ -226,6 +192,10 @@ class EditorController extends CanvasController{
             return true;
         }
         $('.brain-details').css('display', 'none');
+        // hide brain editor window if currently open
+        if (this.control_panel && this.control_panel.brain_editor_open) {
+            this.control_panel.toggleBrainEditor(false);
+        }
         return false;
     }
 
@@ -261,6 +231,14 @@ class EditorController extends CanvasController{
         $('#observation-type-edit').val(name);
         var reaction = this.env.organism.brain.decisions[name];
         $('#reaction-edit').val(reaction);
+    }
+
+    updateBrainInfo() {
+        const org = this.env.organism;
+        org.brain.countCells();
+        const eyes = org.brain.eye_cell_count;
+        const states = org.brain.num_states;
+        $('#brain-info').text(`Eyes: ${eyes}, States: ${states}`);
     }
 
     setRandomizePanel() {

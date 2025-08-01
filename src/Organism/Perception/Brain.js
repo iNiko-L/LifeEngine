@@ -1,5 +1,4 @@
 const Hyperparams = require("../../Hyperparameters");
-const Directions = require("../Directions");
 const CellStates = require("../Cell/CellStates");
 
 const Decision = {
@@ -12,42 +11,157 @@ const Decision = {
     turn_left: 6,
     turn_right: 7,
     getRandom: function() {
-        let range = Hyperparams.can_rotate ? 7 : 5;
+        const range = Hyperparams.rotationEnabled ? 8 : 6
         return Math.floor(Math.random() * range);
     }
 }
 
-class Brain {
-    constructor(owner){
-        this.owner = owner;
-        this.observations = [];
+// the brain takes eye observations in -> movement decision out
+// it operates as a state machine (the brain state), and has independent logic for each eye
+// each eye has a list of decision maps, one for each brain state
+// each decision map is a map from (observed cell state) -> (movement decision, next brain state)
+// (action,next_state) = decisions[eye_index][state_index][observed_cell]
+// the nearest eye's observations is the one that determines the action
 
-        // corresponds to CellTypes
-        this.decisions = {};
-        for (let cell of CellStates.all) {
-            this.decisions[cell.name] = Decision.neutral;
+class Brain {
+    constructor(owner) {
+        this.owner = owner;
+        this.num_states = 1;
+        this.state = 0;
+        this.observations = [];
+        this.decisions = [[ this.randomDecisionMap() ]];
+        this.eye_cell_count = 0;
+    }
+
+    checkAddedCell(cell) {
+        if (cell.state.name == CellStates.eye.name) {
+            if (this.decisions.length <= this.eye_cell_count) {
+                const eyeStates = [];
+                for(let s=0;s<this.num_states;s++) eyeStates.push(this.randomDecisionMap());
+                this.decisions.push(eyeStates);
+            }
+            this.eye_cell_count++;
         }
-        this.decisions[CellStates.food.name] = Decision.chase;
-        this.decisions[CellStates.killer.name] = Decision.retreat;
+    }
+
+    checkRemovedCell(cell) {
+        if (cell.state.name == CellStates.eye.name) {
+            let eye_index = -1;
+            for (let c of this.owner.anatomy.cells) {
+                if (c.state.name == CellStates.eye.name) {
+                    eye_index++;
+                }
+                if (c === cell) {
+                    break;
+                }
+            }
+            if (eye_index != -1) {
+                this.decisions.splice(eye_index, 1);
+            }
+            this.eye_cell_count--;
+        }
+    }
+
+    countCells() {
+        this.eye_cell_count = 0;
+        for (let cell of this.owner.anatomy.cells) {
+            if (cell.state.name == CellStates.eye.name) {
+                this.eye_cell_count++;
+            }
+        }
+    }
+    
+    newBrainState() {
+        if (this.num_states >= 10) {
+            return;
+        }
+        this.num_states++;
+        // console.log('new brain state', this.num_states);
+        for (let eye of this.decisions) {
+            const last_state = eye[eye.length - 1];
+            if (last_state) {
+                const last_state_copy = JSON.parse(JSON.stringify(last_state));
+                eye.push(last_state_copy);
+            } else {
+                eye.push(this.randomDecisionMap());
+            }
+            // eye.push(this.randomDecisionMap());
+        }
+        const numMut = Math.max(1, Math.floor(Math.random() * this.decisions.length * this.num_states * 2));
+        for (let i = 0; i < numMut; i++) {
+            const eyeIdx = Math.floor(Math.random() * this.decisions.length);
+            const fromState = Math.floor(Math.random() * (this.num_states - 1));
+            const toState = this.num_states - 1;
+            const cellType = CellStates.getRandomName();
+            // console.log(eyeIdx, fromState, toState, cellType);
+            this.decisions[eyeIdx][fromState][cellType].state = toState;
+        }
+    }
+
+    removeBrainState() {
+        if (this.decisions.length > 0 && this.decisions[0].length > 1) {
+            for (let eye of this.decisions) {
+                eye.pop();
+            }
+            // clean all references to the removed state
+            for (let eye of this.decisions) {
+                for (let state of eye) {
+                    for (let cell of CellStates.all) {
+                        if (state[cell.name].state >= this.num_states - 1) {
+                            state[cell.name].state = Math.floor(Math.random() * (this.num_states - 1));
+                        }
+                    }
+                }
+            }
+            this.num_states--;
+        }
+    }
+
+    randomDecisionMap() {
+        const decisions = {};
+        for (let cell of CellStates.all) {
+            decisions[cell.name] = {
+                decision: Decision.getRandom(),
+                state: Math.floor(Math.random() * this.num_states)
+            };
+        }
+        decisions[CellStates.food.name].decision = Decision.chase;
+        decisions[CellStates.killer.name].decision = Decision.retreat;
+        return decisions;
     }
 
     copy(brain) {
-        for (let dec in brain.decisions) {
-            this.decisions[dec] = brain.decisions[dec];
+        this.countCells();
+        this.decisions = [];
+        if (Array.isArray(brain.decisions)) {
+            this.decisions = JSON.parse(JSON.stringify(brain.decisions));
+        } else if (brain.decisions && typeof brain.decisions === 'object') {
+            // legacy single-map structure
+            for (let i = 0; i < this.eye_cell_count; i++) {
+                const decisions_copy = JSON.parse(JSON.stringify(brain.decisions));
+                for (let cell of CellStates.all) {
+                    decisions_copy[cell.name] = {
+                        decision: decisions_copy[cell.name],
+                        state: 0
+                    };
+                }
+                this.decisions.push([decisions_copy]);
+            }
         }
+        if (this.decisions.length > 0) {
+            this.num_states = this.decisions[0].length;
+        }
+        this.countCells();
     }
 
-    randomizeDecisions(randomize_all=false) {
-        // randomize the non obvious decisions
-        if (randomize_all) {
-            this.decisions[CellStates.food.name] = Decision.getRandom();
-            this.decisions[CellStates.killer.name] = Decision.getRandom();
+    randomizeDecisions() {
+        for (let eye of this.decisions) {
+            for (let state of eye) {
+                for (let cell of CellStates.all) {
+                    state[cell.name].decision = Decision.getRandom();
+                }
+            }
         }
-        this.decisions[CellStates.mouth.name] = Decision.getRandom();
-        this.decisions[CellStates.producer.name] = Decision.getRandom();
-        this.decisions[CellStates.mover.name] = Decision.getRandom();
-        this.decisions[CellStates.armor.name] = Decision.getRandom();
-        this.decisions[CellStates.eye.name] = Decision.getRandom();
     }
 
     observe(observation) {
@@ -55,26 +169,43 @@ class Brain {
     }
 
     decide() {
-        let decision = Decision.neutral;
+        let decision = {
+            decision: Decision.neutral,
+            state: 0
+        };
         let closest = Hyperparams.lookRange + 1;
         let move_direction = 0;
-        for (let obs of this.observations) {
+        for (let i = 0; i < this.observations.length; i++) {
+            let obs = this.observations[i];
             if (obs.cell == null || obs.cell.owner == this.owner) {
                 continue;
             }
             if (obs.distance < closest) {
-                decision = this.decisions[obs.cell.state.name];
+                const eye_index = (i < this.decisions.length) ? i : 0;
+                if (this.state >= this.num_states) {
+                    console.error('state out of bounds', this.state, this.num_states);
+                }
+                decision = this.decisions[eye_index][this.state][obs.cell.state.name];
                 move_direction = obs.direction;
                 closest = obs.distance;
             }
         }
         this.observations = [];
-        return {decision, move_direction};
+        this.state = decision.state;
+        return {decision: decision.decision, move_direction};
     }
 
     mutate() {
-        this.decisions[CellStates.getRandomName()] = Decision.getRandom();
-        // this.decisions[CellStates.empty.name] = Decision.neutral; // if the empty cell has a decision it gets weird
+        let eye_index = Math.floor(Math.random() * this.decisions.length);
+        let state_index = Math.floor(Math.random() * this.decisions[eye_index].length);
+        this.decisions[eye_index][state_index][CellStates.getRandomName()].decision = Decision.getRandom();
+        if (Math.random() < 0.1) {
+            if (Math.random() < 0.5) {
+                this.newBrainState();
+            } else {
+                this.removeBrainState();
+            }
+        }
     }
     
     serialize() {
