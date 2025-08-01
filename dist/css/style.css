@@ -408,7 +408,7 @@ input:hover,input:active {
     right: 0;
     left: 33.33%;
     width: 66.67%;
-    height: calc(100% + 50px);
+    height: 450px;
     background-color: var(--panel-bg);
     border: 5px solid var(--border);
     border-bottom: 0;
@@ -448,4 +448,54 @@ input:hover,input:active {
     overflow-y: auto;
     overflow-x: hidden;
     height: 220px;
+}
+
+/* Brain Decision Map Styles */
+#brain-maps {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    overflow-x: auto;
+}
+.decision-map {
+    flex: 0 0 auto;
+    min-width: 300px;
+}
+.decision-map-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+.remove-state-btn {
+    background-color: var(--btn);
+    border: none;
+    color: black;
+    padding: 0 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.remove-state-btn:hover {
+    background-color: var(--btn-hover);
+}
+.remove-state-btn:active {
+    background-color: var(--btn-click);
+}
+.decision-map table {
+    border-collapse: collapse;
+}
+
+.decision-map th,
+.decision-map td {
+    border: 2px solid var(--border);
+    padding: 2px;
+    text-align: center;
+    background-color: var(--panel-bg);
+}
+
+.decision-map th {
+    font-weight: normal;
+    background-color: var(--panel-bg);
 }

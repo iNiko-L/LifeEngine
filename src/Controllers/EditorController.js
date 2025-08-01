@@ -1,21 +1,26 @@
 const CanvasController = require("./CanvasController");
-const Modes = require("./ControlModes");
 const CellStates = require("../Organism/Cell/CellStates");
 const Directions = require("../Organism/Directions");
 const Hyperparams = require("../Hyperparameters");
 const Species = require("../Stats/Species");
 const LoadController = require("./LoadController");
+const Brain = require("../Organism/Perception/Brain");
 const FossilRecord = require("../Stats/FossilRecord");
 
 class EditorController extends CanvasController{
     constructor(env, canvas) {
         super(env, canvas);
-        this.mode = Modes.Edit;
         this.edit_cell_type = null;
         this.highlight_org = false;
         this.defineCellTypeSelection();
         this.defineEditorDetails();
         this.defineSaveLoad();
+        // restore eye highlight after mouse leaves canvas
+        this.canvas.addEventListener('mouseleave', () => {
+            if (this.env.engine && this.env.engine.controlpanel && this.env.engine.controlpanel.brain_editor_open) {
+                this.highlightEye(this.current_eye_index || 0);
+            }
+        });
     }
 
     mouseMove() {
@@ -34,6 +39,7 @@ class EditorController extends CanvasController{
     }
 
     editOrganism() {
+        const controlpanelOpen = this.env.engine && this.env.engine.controlpanel && this.env.engine.controlpanel.brain_editor_open;
         if (this.edit_cell_type == null) return;
         if (this.left_click){
             if(this.edit_cell_type == CellStates.eye && this.cur_cell.state == CellStates.eye) {
@@ -47,9 +53,11 @@ class EditorController extends CanvasController{
         else if (this.right_click)
             this.env.removeCellFromOrg(this.mouse_c, this.mouse_r);
 
-        this.setBrainPanelVisibility();
-        this.setMoveRangeVisibility();
+
         this.updateDetails();
+        if (controlpanelOpen) {
+            this.highlightEye(this.current_eye_index || 0);
+        }
     }
 
     updateDetails() {
@@ -176,28 +184,13 @@ class EditorController extends CanvasController{
             $('#mutation-rate-cont').css('display', 'block');
         }
         
-        if (this.setBrainPanelVisibility()){
-            this.setBrainEditorValues($('#observation-type-edit').val());
-        }
-
+        this.setMoveRangeVisibility();
         $('#cell-selections').css('display', 'grid');
         this.updateBrainInfo();
         $('#edit-organism-details').css('display', 'block');
     }
 
-    setBrainPanelVisibility() {
-        var org = this.env.organism;
-        if (org.anatomy.has_eyes && org.anatomy.is_mover) {
-            $('.brain-details').css('display', 'block');
-            return true;
-        }
-        $('.brain-details').css('display', 'none');
-        // hide brain editor window if currently open
-        if (this.control_panel && this.control_panel.brain_editor_open) {
-            this.control_panel.toggleBrainEditor(false);
-        }
-        return false;
-    }
+    
 
     setBrainDetails() {
         var chase_types = [];
@@ -236,9 +229,170 @@ class EditorController extends CanvasController{
     updateBrainInfo() {
         const org = this.env.organism;
         org.brain.countCells();
-        const eyes = org.brain.eye_cell_count;
-        const states = org.brain.num_states;
-        $('#brain-info').text(`Eyes: ${eyes}, States: ${states}`);
+        const brainInfo = $('#brain-info');
+        const brainMaps = $('#brain-maps');
+        brainMaps.empty();
+        $('#brain-editor-controls').remove();
+
+        if (!org.anatomy.has_eyes || !org.anatomy.is_mover) {
+            brainInfo.html('<h2>Brain</h2><p>Add 1 eye and 1 mover to add a brain</p>');
+            return;
+        }
+
+        let eyeOptions = '';
+        for (let i = 0; i < org.brain.eye_cell_count; i++) {
+            eyeOptions += `<option value="${i}">Eye ${i + 1}</option>`;
+        }
+
+        brainInfo.html(`
+            <h2>Brain</h2>
+            <label for="eye-select">Viewing Decisions for</label>
+            <select id="eye-select">${eyeOptions}</select>
+        `);
+        
+        this.generateDecisionMaps(0);
+
+        $('#eye-select').change(() => {
+            this.generateDecisionMaps(parseInt($('#eye-select').val()));
+        });
+
+        // Brain controls: Add State button and Current State selector
+        const controls = $('<div id="brain-editor-controls" style="margin-top:5px;display:flex;align-items:center;gap:10px;"></div>');
+        const addStateBtn = $('<button id="add-brain-state" class="brain-editor-btn">Add Brain State</button>');
+        const stateLabel = $('<label for="current-state-select">Current State:</label>');
+        const stateSelect = $('<select id="current-state-select" class="brain-editor-btn"></select>');
+        for (let i = 0; i < org.brain.num_states; i++) {
+            stateSelect.append(`<option value="${i}" ${org.brain.state === i ? 'selected' : ''}>${i}</option>`);
+        }
+        controls.append(addStateBtn, stateLabel, stateSelect);
+        brainMaps.after(controls);
+        addStateBtn.click(() => {
+            this.env.organism.brain.newBrainState(false);
+            this.updateBrainInfo();
+        });
+        stateSelect.change(() => {
+            const val = parseInt($('#current-state-select').val());
+            this.env.organism.brain.state = val;
+        });
+    }
+
+    highlightEye(eyeIndex){
+        // only if brain editor open
+        if (!(this.env.engine && this.env.engine.controlpanel && this.env.engine.controlpanel.brain_editor_open)) {
+            return;
+        }
+        const org = this.env.organism;
+        const eyes = [];
+        for (let cell of org.anatomy.cells){
+            if (cell.state === CellStates.eye){
+                eyes.push(cell);
+            }
+        }
+        if (eyeIndex < 0 || eyeIndex >= eyes.length) return;
+        const eyeLocal = eyes[eyeIndex];
+        const realCell = org.getRealCell(eyeLocal);
+        if (!realCell) return;
+
+        // remove previous eye highlight but keep other highlights (e.g., hover)
+        if (this._prevEyeHighlight){
+            // redraw the cell in its normal state and remove from renderer's highlighted set
+            this.env.renderer.renderCell(this._prevEyeHighlight);
+            this.env.renderer.highlighted_cells.delete(this._prevEyeHighlight);
+        }
+
+        // add new highlight
+        this.env.renderer.highlightCell(realCell);
+        // ensure it shows up immediately
+        this.env.renderer.renderHighlights();
+        this._prevEyeHighlight = realCell;
+    }
+
+    updateMouseLocation(offsetX, offsetY) {
+        super.updateMouseLocation(offsetX, offsetY);
+        if (this.env.engine && this.env.engine.controlpanel && this.env.engine.controlpanel.brain_editor_open) {
+            this.highlightEye(this.current_eye_index || 0);
+        }
+    }
+
+    generateDecisionMaps(eyeIndex) {
+        this.current_eye_index = eyeIndex;
+        // highlight corresponding eye when panel is open
+        this.highlightEye(eyeIndex);
+        const org = this.env.organism;
+        const brainMaps = $('#brain-maps');
+        // clear previous handlers to avoid duplicates when regenerating
+        brainMaps.off('change', '.action-select');
+        brainMaps.off('change', '.state-select');
+        brainMaps.off('click', '.remove-state-btn');
+        brainMaps.empty();
+
+        if (eyeIndex >= org.brain.decisions.length) return;
+
+        const eyeDecisionMaps = org.brain.decisions[eyeIndex];
+
+        for (let i = 0; i < eyeDecisionMaps.length; i++) {
+            const stateMap = eyeDecisionMaps[i];
+            let table = `
+                <div class="decision-map">
+                    <div class="decision-map-header"><h4>Brain State ${i}</h4>${org.brain.num_states > 1 ? `<button class=\"remove-state-btn\" data-state=\"${i}\">x</button>` : ''}</div>
+                    <table>
+                        <tr>
+                            <th>Observation</th>
+                            <th>Action</th>
+                            <th>Next State</th>
+                        </tr>
+            `;
+
+            for (const cellType in stateMap) {
+                const decision = stateMap[cellType];
+                table += `
+                    <tr>
+                        <td>${cellType}</td>
+                        <td>${this.generateActionDropdown(eyeIndex, i, cellType, decision.decision)}</td>
+                        <td>${this.generateStateDropdown(eyeIndex, i, cellType, decision.state)}</td>
+                    </tr>
+                `;
+            }
+
+            table += '</table></div>';
+            brainMaps.append(table);
+        }
+        
+        $('.remove-state-btn').click((e) => {
+            const idx = parseInt($(e.target).data('state'));
+            org.brain.removeBrainState(idx);
+            this.updateBrainInfo();
+        });
+
+        $('.action-select, .state-select').change((e) => {
+            const target = $(e.target);
+            const eye = target.data('eye');
+            const state = target.data('state');
+            const cell = target.data('cell');
+            const type = target.data('type');
+            const value = parseInt(target.val());
+            console.log(org.brain.decisions[eye][state][cell][type])
+            console.log(eye, state, cell, type, value);
+            org.brain.decisions[eye][state][cell][type] = value;
+        });
+    }
+
+    generateActionDropdown(eye, state, cell, selectedAction) {
+        let options = '';
+        for (const action in Brain.Decision) {
+            if (typeof Brain.Decision[action] === 'number') {
+                options += `<option value="${Brain.Decision[action]}" ${selectedAction === Brain.Decision[action] ? 'selected' : ''}>${action}</option>`;
+            }
+        }
+        return `<select class="action-select" data-eye="${eye}" data-state="${state}" data-cell="${cell}" data-type="decision">${options}</select>`;
+    }
+
+    generateStateDropdown(eye, state, cell, selectedState) {
+        let options = '';
+        for (let i = 0; i < this.env.organism.brain.num_states; i++) {
+            options += `<option value="${i}" ${selectedState === i ? 'selected' : ''}>${i}</option>`;
+        }
+        return `<select class="state-select" data-eye="${eye}" data-state="${state}" data-cell="${cell}" data-type="state">${options}</select>`;
     }
 
     setRandomizePanel() {

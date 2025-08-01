@@ -29,16 +29,22 @@ class Brain {
         this.num_states = 1;
         this.state = 0;
         this.observations = [];
-        this.decisions = [[ this.randomDecisionMap() ]];
+        this.decisions = [[ this.newDecisionMap() ]];
         this.eye_cell_count = 0;
     }
 
     checkAddedCell(cell) {
         if (cell.state.name == CellStates.eye.name) {
             if (this.decisions.length <= this.eye_cell_count) {
-                const eyeStates = [];
-                for(let s=0;s<this.num_states;s++) eyeStates.push(this.randomDecisionMap());
-                this.decisions.push(eyeStates);
+                if (this.decisions.length === 0) {
+                    const eyeStates = [];
+                    for(let s=0;s<this.num_states;s++) eyeStates.push(this.newDecisionMap());
+                    this.decisions.push(eyeStates);
+                } else {
+                    // if there are already eyes, copy the last eye's states/decisions to new eye
+                    const last_eye_copy = JSON.parse(JSON.stringify(this.decisions[this.decisions.length - 1]));
+                    this.decisions.push(last_eye_copy);
+                }
             }
             this.eye_cell_count++;
         }
@@ -71,7 +77,7 @@ class Brain {
         }
     }
     
-    newBrainState() {
+    newBrainState(randomize_connections=true) {
         if (this.num_states >= 10) {
             return;
         }
@@ -83,45 +89,57 @@ class Brain {
                 const last_state_copy = JSON.parse(JSON.stringify(last_state));
                 eye.push(last_state_copy);
             } else {
-                eye.push(this.randomDecisionMap());
+                eye.push(this.newDecisionMap(default_decision));
             }
-            // eye.push(this.randomDecisionMap());
         }
+        if (!randomize_connections)
+            return;
         const numMut = Math.max(1, Math.floor(Math.random() * this.decisions.length * this.num_states * 2));
         for (let i = 0; i < numMut; i++) {
             const eyeIdx = Math.floor(Math.random() * this.decisions.length);
             const fromState = Math.floor(Math.random() * (this.num_states - 1));
             const toState = this.num_states - 1;
             const cellType = CellStates.getRandomName();
-            // console.log(eyeIdx, fromState, toState, cellType);
             this.decisions[eyeIdx][fromState][cellType].state = toState;
         }
     }
 
-    removeBrainState() {
-        if (this.decisions.length > 0 && this.decisions[0].length > 1) {
-            for (let eye of this.decisions) {
-                eye.pop();
-            }
-            // clean all references to the removed state
-            for (let eye of this.decisions) {
-                for (let state of eye) {
-                    for (let cell of CellStates.all) {
-                        if (state[cell.name].state >= this.num_states - 1) {
-                            state[cell.name].state = Math.floor(Math.random() * (this.num_states - 1));
-                        }
+    removeBrainState(index=-1) {
+        if (index === -1) {
+            index = this.num_states - 1;
+        }
+        if (this.num_states <= 1) {
+            return;
+        }
+        const new_num_states = this.num_states - 1;
+        for (let eye of this.decisions) {
+            for (let i=0;i<eye.length;i++) {
+                if (i === index) {
+                    continue;
+                }
+                const state = eye[i];
+                for (let cell of CellStates.all) {
+                    if (state[cell.name].state === index) {
+                        state[cell.name].state = Math.floor(Math.random() * new_num_states);
+                    }
+                    if (state[cell.name].state > index) {
+                        state[cell.name].state--;
                     }
                 }
             }
-            this.num_states--;
+            eye.splice(index, 1);
+        }
+        this.num_states = new_num_states;
+        if (this.state >= this.num_states) {
+            this.state = this.num_states;
         }
     }
 
-    randomDecisionMap() {
+    newDecisionMap(default_decision=null) {
         const decisions = {};
         for (let cell of CellStates.all) {
             decisions[cell.name] = {
-                decision: Decision.getRandom(),
+                decision: default_decision || Decision.getRandom(),
                 state: Math.floor(Math.random() * this.num_states)
             };
         }

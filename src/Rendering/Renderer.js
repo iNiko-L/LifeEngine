@@ -86,8 +86,12 @@ class Renderer {
         this.cells_to_highlight.add(cell);
     }
 
-    renderCellHighlight(cell, color="yellow") {
+    renderCellHighlight(cell) {
         this.renderCell(cell);
+        let color = 'yellow';
+        if (cell.state.color === 'yellow') {
+            color = 'red';
+        }
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = this.cell_size * 0.2;
         this.ctx.strokeRect(cell.x + this.cell_size * 0.1, cell.y + this.cell_size * 0.1, 

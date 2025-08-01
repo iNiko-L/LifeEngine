@@ -47,6 +47,7 @@ class OrganismEditor extends Environment{
             this.changeCell(c, r, state, this.organism.anatomy.addDefaultCell(state, loc_c, loc_r));
         }
         this.organism.species = new Species(this.organism.anatomy, null, 0);
+        this.updateCloneRef();
     }
 
     removeCellFromOrg(c, r) {
@@ -62,6 +63,7 @@ class OrganismEditor extends Environment{
             if (this.organism.anatomy.removeCell(loc_c, loc_r)) {
                 this.changeCell(c, r, CellStates.empty, null);
                 this.organism.species = new Species(this.organism.anatomy, null, 0);
+        this.updateCloneRef();
             }
         }
     }
@@ -70,11 +72,18 @@ class OrganismEditor extends Environment{
         this.grid_map.fillGrid(CellStates.empty);
         var center = this.grid_map.getCenter();
         console.log(orig_org.brain.decisions);
-        console.log("num eyes", orig_org.brain.decisions.length);
-        console.log("num states", orig_org.brain.decisions[0].length, `(${orig_org.brain.num_states})`);
+        // console.log("num eyes", orig_org.brain.decisions.length);
+        // console.log("num states", orig_org.brain.decisions[0].length, `(${orig_org.brain.num_states})`);
         this.organism = new Organism(center[0], center[1], this, orig_org);
         this.organism.updateGrid();
         this.controller.updateDetails();
+        this.updateCloneRef();
+    }
+
+    updateCloneRef() {
+        if (this.engine && this.engine.controlpanel && this.engine.controlpanel.env_controller) {
+            this.engine.controlpanel.env_controller.org_to_clone = this.organism;
+        }
     }
     
     getCopyOfOrg() {
@@ -93,6 +102,7 @@ class OrganismEditor extends Environment{
         this.organism.anatomy.addDefaultCell(CellStates.mouth, 0, 0);
         this.organism.updateGrid();
         this.organism.species = new Species(this.organism.anatomy, null, 0);
+        this.updateCloneRef();
     }
 
     createRandom() {
@@ -101,6 +111,7 @@ class OrganismEditor extends Environment{
         this.organism = RandomOrganismGenerator.generate(this);
         this.organism.updateGrid();
         this.organism.species = new Species(this.organism.anatomy, null, 0);
+        this.updateCloneRef();
     }
 
     resetWithRandomOrgs(env) {

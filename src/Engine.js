@@ -4,13 +4,15 @@ const OrganismEditor = require('./Environments/OrganismEditor');
 const {ColorScheme} = require('./Rendering/ColorScheme');
 
 const MIN_TIMER_MS = 1;
-const SAFE_STEPS_PER_TICK = 10;
+const SAFE_STEPS_PER_TICK = 10; // soft upper limit, can be bypassed when we have extra time
+const MAX_STEPS_PER_TICK = 100; // hard upper limit to prevent stalling the UI
 
 class Engine {
     constructor(){
         this.fps = 60;
         this.env = new WorldEnvironment(this, 5);
         this.organism_editor = new OrganismEditor();
+        this.organism_editor.engine = this;
         this.controlpanel = new ControlPanel(this);
         ColorScheme.setEnvironment(this.env, this.organism_editor);
         ColorScheme.loadColorScheme();
@@ -81,9 +83,9 @@ class Engine {
                 }
 
                 // Max Steps Safety Check
-                if (steps > SAFE_STEPS_PER_TICK) {                    
+                if (steps > SAFE_STEPS_PER_TICK) {
                     // if steps have taken less time than expected, we can afford to take more steps
-                    if (Date.now() - start_time < this.step_ms*steps)
+                    if (Date.now() - start_time < this.step_ms*steps && steps < MAX_STEPS_PER_TICK)
                         continue;
 
                     // otherwise we will start stalling, so stop the loop

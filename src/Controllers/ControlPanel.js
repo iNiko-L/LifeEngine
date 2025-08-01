@@ -488,7 +488,7 @@ class ControlPanel {
         }.bind(this));
         $('#generate-random').click( function() {
             this.engine.organism_editor.createRandom();
-            this.editor_controller.refreshDetailsPanel();
+            this.editor_controller.setEditorPanel();
         }.bind(this));
         $('.reset-random').click( function() {
             this.engine.organism_editor.resetWithRandomOrgs(this.engine.env);
@@ -533,6 +533,7 @@ class ControlPanel {
             $('.control-panel').append(`
                 <div id="brain-editor-window" class="brain-editor-window">
                     <div id="brain-info" class="brain-info"></div>
+                    <div id="brain-maps"></div>
                     <button id="close-brain-editor"><i class="fa fa-times"></i></button>
                 </div>`);
         }
@@ -551,6 +552,13 @@ class ControlPanel {
         }
         win.css('display', show ? 'block' : 'none');
         this.brain_editor_open = show;
+        if (show) {
+            this.editor_controller.updateBrainInfo();
+        } else {
+            if (this.engine && this.engine.organism_editor) {
+                this.engine.organism_editor.renderer.clearAllHighlights(true);
+            }
+        }
     }
 
     setPaused(paused) {
@@ -573,7 +581,7 @@ class ControlPanel {
         this.editor_controller.mode = mode;
 
         if (mode == Modes.Clone) {
-            this.env_controller.org_to_clone = this.engine.organism_editor.getCopyOfOrg();
+            this.env_controller.org_to_clone = this.engine.organism_editor.organism;
         }
     }
 
