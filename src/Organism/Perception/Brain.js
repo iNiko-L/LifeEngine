@@ -82,14 +82,13 @@ class Brain {
             return;
         }
         this.num_states++;
-        // console.log('new brain state', this.num_states);
         for (let eye of this.decisions) {
             const last_state = eye[eye.length - 1];
             if (last_state) {
                 const last_state_copy = JSON.parse(JSON.stringify(last_state));
                 eye.push(last_state_copy);
             } else {
-                eye.push(this.newDecisionMap(default_decision));
+                eye.push(this.newDecisionMap());
             }
         }
         if (!randomize_connections)
@@ -213,11 +212,23 @@ class Brain {
         return {decision: decision.decision, move_direction};
     }
 
+    size() {
+        return this.decisions.length * this.num_states * CellStates.all.length;
+    }
+
     mutate() {
-        let eye_index = Math.floor(Math.random() * this.decisions.length);
-        let state_index = Math.floor(Math.random() * this.decisions[eye_index].length);
-        this.decisions[eye_index][state_index][CellStates.getRandomName()].decision = Decision.getRandom();
-        if (Math.random() < 0.1) {
+        let num_mutations = Math.floor(Math.random() * this.size()/2);
+        for (let i = 0; i < num_mutations; i++) {
+            let eye_index = Math.floor(Math.random() * this.decisions.length);
+            let state_index = Math.floor(Math.random() * this.decisions[eye_index].length);
+            if (Math.random() < 0.5) {
+                this.decisions[eye_index][state_index][CellStates.getRandomName()].decision = Decision.getRandom();
+            }
+            else {
+                this.decisions[eye_index][state_index][CellStates.getRandomName()].state = Math.floor(Math.random() * this.num_states);
+            }
+        }
+        if (Math.random() < 0.25) {
             if (Math.random() < 0.5) {
                 this.newBrainState();
             } else {

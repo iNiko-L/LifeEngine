@@ -202,7 +202,9 @@
 						
 					</div>
 					<div class='right-half'>
-						<button id='reset-rules'>Reset all controls</button><br>
+						<button id='reset-rules'>Reset all controls</button>
+						<button id='save-controls' title="Save all Evolution Controls in a .json file">Save & Download</button>
+						<button id='load-controls' title="Load saved Evolution Controls with a .json file">Load</button><br>
 						<label for="org-limit" title='Maximum number of organisms (-1 is unlimited)'>Maximum Organisms:</label>
 						<input type="number" id="org-limit" min="-1" value=-1 step="1"><br>
 						<label for="evolved-mutation" title='When on, each organism has its own mutation rate that can increase or decrease. When off, all organisms have the same mutation rate.'>Use evolved mutation rate</label>
@@ -225,8 +227,6 @@
 						<label for="food-blocks" title='When on, reproduction will fail if offspring intersect with food. When off, offspring will remove blocking food.'>Food blocks reproduction</label>
 						<input type="checkbox" id="food-blocks" checked>
 						<br>
-						<button id='save-controls' title="Save all Evolution Controls in a .json file">Save & Download</button>
-						<button id='load-controls' title="Load saved Evolution Controls with a .json file">Load</button>
 						<a id="download-el" style="display: none;"></a>
 						<input id="upload-hyperparams" style="display: none;" type="file">
 					</div>
