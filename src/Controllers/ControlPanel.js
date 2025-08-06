@@ -123,6 +123,7 @@ class ControlPanel {
 
     defineEngineSpeedControls(){
         this.slider = document.getElementById("slider");
+        this.hot_slider = document.getElementById("slider-hot");
 
         // helper mappings
         const sliderToFps = (val) => {
@@ -147,6 +148,9 @@ class ControlPanel {
 
         // initialise slider position from current fps and label
         this.slider.value = fpsToSlider(this.fps);
+        if (this.hot_slider) {
+            this.hot_slider.value = this.slider.value;
+        }
         $('#fps').text("Target FPS: "+this.fps);
 
         this.slider.oninput = function() {
@@ -165,11 +169,35 @@ class ControlPanel {
                 this.changeEngineSpeed(newFps);
             }
             $('#fps').text("Target FPS: " + fpsText);
+            if (this.hot_slider) this.hot_slider.value = this.slider.value;
         }.bind(this);
 
         // check initial value
         if (this.slider.value == 100) {
             this.slider.oninput();
+        }
+
+        if (this.hot_slider) {
+            this.hot_slider.oninput = function() {
+                let newFps;
+                let fpsText;
+                if (this.hot_slider.value == 100) {
+                    newFps = 10000000;
+                    fpsText = "MAXIMUM OVERDRIVE";
+                } else {
+                    newFps = sliderToFps(this.hot_slider.value);
+                    fpsText = newFps;
+                }
+                this.fps = newFps;
+                if (this.engine.running) {
+                    this.changeEngineSpeed(newFps);
+                }
+                $('#fps').text("Target FPS: " + fpsText);
+                this.slider.value = this.hot_slider.value;
+            }.bind(this);
+            if (this.hot_slider.value == 100) {
+                this.hot_slider.oninput();
+            }
         }
 
         $('.pause-button').click(function() {
@@ -370,6 +398,9 @@ class ControlPanel {
         $('#food-blocks').change( function() {
             Hyperparams.foodBlocksReproduction = this.checked;        
         });
+        $('#dont-kill-same-species').change(function() {
+            Hyperparams.dontKillSameSpecies = this.checked;
+        });
         $('#reset-rules').click(() => {
             this.setHyperparamDefaults();
         });
@@ -414,6 +445,7 @@ class ControlPanel {
         $('#remove-prob').val(Hyperparams.removeProb);
         $('#movers-produce').prop('checked', Hyperparams.moversCanProduce);
         $('#food-blocks').prop('checked', Hyperparams.foodBlocksReproduction);
+        $('#dont-kill-same-species').prop('checked', Hyperparams.dontKillSameSpecies);
         $('#food-drop-rate').val(Hyperparams.foodDropProb);
         $('#extra-mover-cost').val(Hyperparams.extraMoverFoodCost);
         $('#org-limit').val(Hyperparams.maxOrganisms);

@@ -184,9 +184,6 @@
 						<label for="rot-enabled" title='Organisms rotate when born and while moving.'>Rotation Enabled</label>
 						<input type="checkbox" id="rot-enabled" checked>
 						<br>
-						<label for="insta-kill" title='When on, killer cells immediately kill organisms they touch. When off, organisms have as much health as they have cells and only take 1 damage from killer cells.'>One touch kill</label>
-						<input type="checkbox" id="insta-kill">
-						<br>
 						<label for="look-range" title='How far an eye cell can see (in number of cells)'>Look range:</label>
 						<input type="number" id="look-range" min="1" max="50" value=20 step="1">
 						<br>
@@ -207,6 +204,12 @@
 						<button id='load-controls' title="Load saved Evolution Controls with a .json file">Load</button><br>
 						<label for="org-limit" title='Maximum number of organisms (-1 is unlimited)'>Maximum Organisms:</label>
 						<input type="number" id="org-limit" min="-1" value=-1 step="1"><br>
+						<label for="insta-kill" title='When on, killer cells immediately kill organisms they touch. When off, organisms have as much health as they have cells and only take 1 damage from killer cells.'>One touch kill</label>
+						<input type="checkbox" id="insta-kill">
+						<br>
+						<label for="dont-kill-same-species" title='When on, killer cells will not harm organisms of the same species.'>Don't kill same species</label>
+						<input type="checkbox" id="dont-kill-same-species">
+						<br>
 						<label for="evolved-mutation" title='When on, each organism has its own mutation rate that can increase or decrease. When off, all organisms have the same mutation rate.'>Use evolved mutation rate</label>
 						<input type="checkbox" id="evolved-mutation" checked>
 						<div class="global-mutation-container">
@@ -292,7 +295,9 @@
 			<button class="edit-mode-btn click-kill" id="click-kill" title="Click to kill. Hotkey: G"><i class="fa fa-skull"></i></button>
 			<button class="headless" title="Toggle rendering. Hotkey: H"><i class="fa fa-eye-slash"></i></button>
 			<button class='pause-button' title="Play/Pause. Hotkey: Spacebar"><i class="fa fa-pause"></i></button>
-			<span id="fps-hot"></span>
+            <span class="fps-box"><span id="fps-hot"></span>
+                 <input id="slider-hot" type="range" min="1" max="100" value="25">
+             </span>
 		</div>
 		<div id="headless-notification">
 			<i class="fa fa-eye-slash" ></i>

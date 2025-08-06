@@ -20,6 +20,7 @@ const Hyperparams = {
         this.moversCanProduce = false;
 
         this.instaKill = false;
+        this.dontKillSameSpecies = false;
 
         this.lookRange = 20;
         this.seeThroughSelf = false;

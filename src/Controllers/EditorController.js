@@ -70,6 +70,30 @@ class EditorController extends CanvasController{
             $('#unnatural-org-warning').css('display', 'block');
         }
         this.updateBrainInfo();
+        this.updateBrainSummary();
+    }
+
+    updateBrainSummary() {
+        const org = this.env.organism;
+        let summaryText;
+        if (org.anatomy && org.anatomy.has_eyes && org.anatomy.is_mover) {
+            // ensure counts are up to date
+            if (org.brain && typeof org.brain.countCells === 'function') {
+                org.brain.countCells();
+            }
+            const eyes = org.brain ? org.brain.eye_cell_count : 0;
+            const states = org.brain ? org.brain.num_states : 0;
+            summaryText = `Number of Eyes: ${eyes}<br>Number of Brain States: ${states}`;
+        } else {
+            summaryText = 'No brain';
+        }
+        // Update in both organism and editor detail panels if they exist
+        ['#organism-details', '#edit-organism-details'].forEach(sel => {
+            const cont = $(`${sel} .brain-details`);
+            if (!cont.length) return;
+            cont.find('.brain-info-summary').remove();
+            cont.append(`<p class="brain-info-summary">${summaryText}</p>`);
+        });
     }
 
     defineCellTypeSelection() {
