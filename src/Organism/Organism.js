@@ -18,7 +18,6 @@ class Organism {
         this.anatomy = new Anatomy(this)
         this.direction = Directions.down; // direction of movement
         this.rotation = Directions.up; // direction of rotation
-        this.can_rotate = Hyperparams.rotationEnabled;
         this.move_count = 0;
         this.move_range = 4;
         this.ignore_brain_for = 0;
@@ -76,20 +75,8 @@ class Organism {
             }
         } 
         var mutated = false;
-        if (Math.random() * 100 <= prob) {
-            if (org.anatomy.is_mover && Math.random() * 100 <= 10) { 
-                if (org.anatomy.has_eyes) {
-                    org.brain.mutate();
-                }
-                org.move_range += Math.floor(Math.random() * 4) - 2;
-                if (org.move_range <= 0){
-                    org.move_range = 1;
-                };
-                
-            }
-            else {
-                mutated = org.mutate();
-            }
+        if (this.calcRandomChance(prob)) {
+            mutated = org.mutate();
         }
 
         var direction = Directions.getRandomScalar();
@@ -124,13 +111,37 @@ class Organism {
         let removed = false;
         if (this.calcRandomChance(Hyperparams.addProb)) {
             let branch = this.anatomy.getRandomCell();
-            let state = CellStates.getRandomLivingType();//branch.state;
-            let growth_direction = Neighbors.all[Math.floor(Math.random() * Neighbors.all.length)]
-            let c = branch.loc_col+growth_direction[0];
-            let r = branch.loc_row+growth_direction[1];
-            if (this.anatomy.canAddCellAt(c, r)){
+            let state = CellStates.getRandomLivingType(); // branch.state;
+            let growth_direction = Neighbors.all[Math.floor(Math.random() * Neighbors.all.length)];
+            let c = branch.loc_col + growth_direction[0];
+            let r = branch.loc_row + growth_direction[1];
+            if (this.anatomy.canAddCellAt(c, r)) {
                 added = true;
                 this.anatomy.addRandomizedCell(state, c, r);
+
+                // attempt symmetrical mutations across horizontal, vertical, and both diagonal axes
+                const axes = ['h', 'v', 'd'];
+                for (let axis of axes) {
+                    if (this.calcRandomChance(Hyperparams.mutationSymmetryChance)) {
+                        let mc = c;
+                        let mr = r;
+                        switch (axis) {
+                            case 'h': // horizontal symmetry (mirror over x-axis)
+                                mr = -r;
+                                break;
+                            case 'v': // vertical symmetry (mirror over y-axis)
+                                mc = -c;
+                                break;
+                            case 'd': // diagonal symmetry (mirror over both axes)
+                                mc = -c;
+                                mr = -r;
+                                break;
+                        }
+                        if (this.anatomy.canAddCellAt(mc, mr)) {
+                            this.anatomy.addRandomizedCell(state, mc, mr);
+                        }
+                    }
+                }
             }
         }
         if (this.calcRandomChance(Hyperparams.changeProb)){
@@ -145,6 +156,16 @@ class Organism {
                 removed = this.anatomy.removeCell(cell.loc_col, cell.loc_row);
             }
         }
+        if (this.anatomy.is_mover && this.calcRandomChance(Hyperparams.brainMutationChance)) { 
+            if (this.anatomy.has_eyes) {
+                this.brain.mutate();
+            }
+            this.move_range += Math.floor(Math.random() * 4) - 2;
+            if (this.move_range <= 0){
+                this.move_range = 1;
+            };
+        }
+        // return true if a new species is created, which is only true for anatomy changes, not brain changes
         return added || changed || removed;
     }
 
@@ -173,7 +194,7 @@ class Organism {
     }
 
     attemptRotate(rotation=null) {
-        if(!this.can_rotate){
+        if(!Hyperparams.rotationEnabled){
             this.direction = Directions.getRandomDirection();
             this.move_count = 0;
             return true;

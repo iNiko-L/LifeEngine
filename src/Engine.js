@@ -4,7 +4,7 @@ const OrganismEditor = require('./Environments/OrganismEditor');
 const {ColorScheme} = require('./Rendering/ColorScheme');
 
 const MIN_TIMER_MS = 1;
-const SAFE_STEPS_PER_TICK = 10; // soft upper limit, can be bypassed when we have extra time
+let SAFE_STEPS_PER_TICK = 5;// soft upper limit, can be bypassed when we have extra time
 const MAX_STEPS_PER_TICK = 100; // hard upper limit to prevent stalling the UI
 
 class Engine {
@@ -134,6 +134,9 @@ class Engine {
         this.organism_editor.update();
     }
 
+    setSafeStepsPerTick(val) {
+        SAFE_STEPS_PER_TICK = val;
+    }
 }
 
 module.exports = Engine;

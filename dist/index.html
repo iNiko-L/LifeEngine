@@ -101,7 +101,7 @@
 							</div>
 							<div style='grid-column: 2;'>
 								<div class='cell-type' id='killer' title="Killer: Harms organisms in adjacent cells."></div>
-								<div class='cell-type' id='armor' title="Armor: Negates affects of killer cell."></div>
+								<div class='cell-type' id='armor' title="Armor: Unharmed by killer cell."></div>
 								<div class='cell-type' id='eye' title="Eye: Looks for cells to move away from or towards. Click again on a placed cell to rotate"></div>
 							</div>
 
@@ -154,6 +154,9 @@
 						<button class='randomize-button reset-random' title="Generate many random organisms in the world.">Reset with Random Organisms</button>
 						<label for="num-random-orgs" title='Number of random organisms to generate'>Num to generate:</label>
 						<input type="number" id="num-random-orgs" min="1" value=100 step="1">
+						<br>
+						<label for="safe-steps-per-tick" title='Safety limit for the max number of simulation steps to compute in each update. Higher values can mean faster updates, but more likely to stall UI.'>Max steps per update:</label>
+						<input type="number" id="safe-steps-per-tick" min="1" value=5 step="1" max="100">
 					</div>
 					<div class='right-half'>
 						<br>
@@ -185,7 +188,7 @@
 						<input type="checkbox" id="rot-enabled" checked>
 						<br>
 						<label for="look-range" title='How far an eye cell can see (in number of cells)'>Look range:</label>
-						<input type="number" id="look-range" min="1" max="50" value=20 step="1">
+						<input type="number" id="look-range" min="1" max="50" value=30 step="1">
 						<br>
 						<label for="see-through-self" title='Allows eyes to see through an organisms own cells'>See through self:</label>
 						<input type="checkbox" id="see-through-self">
@@ -195,6 +198,12 @@
 						<br>
 						<label for="extra-mover-cost" title='Additional food cost for movers to reproduce'>Extra mover reproduction cost:</label>
 						<input type="number" id="extra-mover-cost" value=0 max="1000" step="1">
+						<br>
+						<label for="insta-kill" title='When on, killer cells immediately kill organisms they touch. When off, organisms have as much health as they have cells and only take 1 damage from killer cells.'>One touch kill</label>
+						<input type="checkbox" id="insta-kill">
+						<br>
+						<label for="dont-kill-same-species" title='When on, killer cells will not harm organisms of the same species.'>Don't kill same species</label>
+						<input type="checkbox" id="dont-kill-same-species">
 
 						
 					</div>
@@ -204,25 +213,24 @@
 						<button id='load-controls' title="Load saved Evolution Controls with a .json file">Load</button><br>
 						<label for="org-limit" title='Maximum number of organisms (-1 is unlimited)'>Maximum Organisms:</label>
 						<input type="number" id="org-limit" min="-1" value=-1 step="1"><br>
-						<label for="insta-kill" title='When on, killer cells immediately kill organisms they touch. When off, organisms have as much health as they have cells and only take 1 damage from killer cells.'>One touch kill</label>
-						<input type="checkbox" id="insta-kill">
-						<br>
-						<label for="dont-kill-same-species" title='When on, killer cells will not harm organisms of the same species.'>Don't kill same species</label>
-						<input type="checkbox" id="dont-kill-same-species">
-						<br>
 						<label for="evolved-mutation" title='When on, each organism has its own mutation rate that can increase or decrease. When off, all organisms have the same mutation rate.'>Use evolved mutation rate</label>
 						<input type="checkbox" id="evolved-mutation" checked>
 						<div class="global-mutation-container">
 							<label class="global-mutation-in" for="global-mutation">Global mutation rate: </label>
 							<input class="global-mutation-in" type="number" id="global-mutation" min="0" max="100" value=5 step="1">
 						</div>
-						<h4 title='When an organism mutates, it can choose from one of the following mutation types.'>Mutation Type Probabilities</h4>
+						<h4 title='When an organism mutates, it can choose from one of the following mutation types. Not mutually exclusive.'>Mutation Type Probabilities</h4>
 						<label for="add-prob" title='A new cell will stem from an existing one'>Add Cell:</label>
-						<input class="mut-prob" type="number" id="add-prob" min="0" max="100" value=33>
+						<input class="mut-prob" type="number" id="add-prob" min="0" max="100" value=25>
 						<label for="change-prob" title='A currently existing cell will change its color.'>Change Cell:</label>
-						<input class="mut-prob" type="number" id="change-prob" min="0" max="100" value=33>
+						<input class="mut-prob" type="number" id="change-prob" min="0" max="100" value=25><br>
 						<label for="remove-prob" title='An existing cell will be removed.'>Remove Cell:</label>
-						<input class="mut-prob" type="number" id="remove-prob" min="0" max="100" value=33>
+						<input class="mut-prob" type="number" id="remove-prob" min="0" max="100" value=25>
+						<label for="brain-mutation-chance" title='Some brain decisions will be mutated, or a new brain state will be added.'>Mutate brain</label>
+						<input type="number" id="brain-mutation-chance" min="0" max="100" value=25>
+						<br/>
+						<label for="mutation-symmetry-chance" title='When a cell is added, it has this probability of being mirrored across the horizontal, vertical, and diagonal axes (each has the same chance).'>Mutation symmetry probability</label>
+						<input type="number" id="mutation-symmetry-chance" min="0" max="100" value=25 step="1">
 						<br/>
 						<label for="movers-produce" title='When on, movers can produce food from producer cells. When off, producer cells are disabled on mover organisms.'>Movers can produce food</label>
 						<input type="checkbox" id="movers-produce">

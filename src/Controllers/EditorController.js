@@ -146,13 +146,11 @@ class EditorController extends CanvasController{
         }.bind(this));
         $('#observation-type-edit').change ( function() {
             this.setBrainEditorValues($('#observation-type-edit').val());
-            this.setBrainDetails();
         }.bind(this));
         $('#reaction-edit').change ( function() {
             var obs = $('#observation-type-edit').val();
             var decision = parseInt($('#reaction-edit').val());
             this.env.organism.brain.decisions[obs] = decision;
-            this.setBrainDetails();
         }.bind(this));
     }
 
@@ -214,23 +212,6 @@ class EditorController extends CanvasController{
         $('#edit-organism-details').css('display', 'block');
     }
 
-    
-
-    setBrainDetails() {
-        var chase_types = [];
-        var retreat_types = [];
-        for(var cell_name in this.env.organism.brain.decisions) {
-            var decision = this.env.organism.brain.decisions[cell_name];
-            if (decision == 1) {
-                retreat_types.push(cell_name)
-            }
-            else if (decision == 2) {
-                chase_types.push(cell_name);
-            }
-        }
-        $('.chase-types').text("Move Towards: " + chase_types);
-        $('.retreat-types').text("Move Away From: " + retreat_types);
-    }
 
     setMoveRangeVisibility() {
         var org = this.env.organism;
@@ -298,6 +279,7 @@ class EditorController extends CanvasController{
             const val = parseInt($('#current-state-select').val());
             this.env.organism.brain.state = val;
         });
+        this.updateBrainSummary();
     }
 
     highlightEye(eyeIndex){
@@ -395,8 +377,6 @@ class EditorController extends CanvasController{
             const cell = target.data('cell');
             const type = target.data('type');
             const value = parseInt(target.val());
-            console.log(org.brain.decisions[eye][state][cell][type])
-            console.log(eye, state, cell, type, value);
             org.brain.decisions[eye][state][cell][type] = value;
         });
     }

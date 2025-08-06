@@ -392,6 +392,12 @@ class ControlPanel {
             $('#change-prob').val(Math.floor(Hyperparams.changeProb));
             $('#remove-prob').val(Math.floor(Hyperparams.removeProb));
         });
+        $('#mutation-symmetry-chance').change(function() {
+            Hyperparams.mutationSymmetryChance = parseInt($('#mutation-symmetry-chance').val());
+        });
+        $('#brain-mutation-chance').change(function() {
+            Hyperparams.brainMutationChance = parseInt($('#brain-mutation-chance').val());
+        });
         $('#movers-produce').change( function() {
             Hyperparams.moversCanProduce = this.checked;
         });
@@ -403,6 +409,9 @@ class ControlPanel {
         });
         $('#reset-rules').click(() => {
             this.setHyperparamDefaults();
+        });
+        $('#safe-steps-per-tick').change(function() {
+            this.engine.setSafeStepsPerTick(Hyperparams.safeStepsPerTick);
         });
         $('#save-controls').click(() => {
             let data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(Hyperparams));
@@ -443,6 +452,8 @@ class ControlPanel {
         $('#add-prob').val(Hyperparams.addProb);
         $('#change-prob').val(Hyperparams.changeProb);
         $('#remove-prob').val(Hyperparams.removeProb);
+        $('#mutation-symmetry-chance').val(Hyperparams.mutationSymmetryChance);
+        $('#brain-mutation-chance').val(Hyperparams.brainMutationChance);
         $('#movers-produce').prop('checked', Hyperparams.moversCanProduce);
         $('#food-blocks').prop('checked', Hyperparams.foodBlocksReproduction);
         $('#dont-kill-same-species').prop('checked', Hyperparams.dontKillSameSpecies);
