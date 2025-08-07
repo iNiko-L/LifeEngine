@@ -128,9 +128,17 @@ class Organism {
                         switch (axis) {
                             case 'h': // horizontal symmetry (mirror over x-axis)
                                 mr = -r;
+                                if (r === 0) {
+                                    mr = c;
+                                    mc = -r;
+                                }
                                 break;
                             case 'v': // vertical symmetry (mirror over y-axis)
                                 mc = -c;
+                                if (c === 0) {
+                                    mr = -c;
+                                    mc = r;
+                                }
                                 break;
                             case 'd': // diagonal symmetry (mirror over both axes)
                                 mc = -c;

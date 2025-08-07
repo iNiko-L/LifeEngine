@@ -248,6 +248,17 @@ class Brain {
     }
 
     mutate() {
+        if (Math.random() < 0.25) {
+            if (Math.random() < 0.5) {
+                this.newBrainState();
+            } else {
+                this.removeBrainState();
+            }
+        }
+        if (Hyperparams.evolveIndependentEyeDecisions && Math.random() < 0.25) {
+            this.setIndependentEyeDecisions(!this.independent_eye_decisions);
+        }
+        
         let num_mutations = Math.floor(Math.random() * this.size()/2);
         for (let i = 0; i < num_mutations; i++) {
             let eye_index = Math.floor(Math.random() * this.decisions.length);
@@ -258,16 +269,6 @@ class Brain {
             else {
                 this.decisions[eye_index][state_index][CellStates.getRandomName()].state = Math.floor(Math.random() * this.num_states);
             }
-        }
-        if (Math.random() < 0.25) {
-            if (Math.random() < 0.5) {
-                this.newBrainState();
-            } else {
-                this.removeBrainState();
-            }
-        }
-        if (Hyperparams.evolveIndependentEyeDecisions && Math.random() < 0.25) {
-            this.setIndependentEyeDecisions(!this.independent_eye_decisions);
         }
     }
     
