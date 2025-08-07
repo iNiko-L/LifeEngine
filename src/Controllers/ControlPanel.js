@@ -324,6 +324,9 @@ class ControlPanel {
         let was_running = this.engine.running;
         this.setPaused(true);
         this.engine.env.loadRaw(env);
+        if (env.grid.cell_size) {
+            $('#cell-size').val(env.grid.cell_size);
+        }
         if (was_running)
             this.setPaused(false);
         this.updateHyperparamUIValues();
@@ -351,6 +354,9 @@ class ControlPanel {
         });
         $('#see-through-self').change(function() {
             Hyperparams.seeThroughSelf = this.checked;
+        });
+        $('#independent-eye-decisions').change(function() {
+            Hyperparams.evolveIndependentEyeDecisions = this.checked;
         });
         $('#food-drop-rate').change(function() {
             Hyperparams.foodDropProb = $('#food-drop-rate').val();
@@ -410,8 +416,8 @@ class ControlPanel {
         $('#reset-rules').click(() => {
             this.setHyperparamDefaults();
         });
-        $('#safe-steps-per-tick').change(function() {
-            this.engine.setSafeStepsPerTick(Hyperparams.safeStepsPerTick);
+        $('#safe-steps-per-tick').change(() => {
+            this.engine.setSafeStepsPerTick(parseInt($('#safe-steps-per-tick').val()));
         });
         $('#save-controls').click(() => {
             let data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(Hyperparams));
@@ -463,7 +469,8 @@ class ControlPanel {
         $('#look-range').val(Hyperparams.lookRange);
         $('#see-through-self').prop('checked', Hyperparams.seeThroughSelf);
         $('#global-mutation').val(Hyperparams.globalMutability);
-
+        $('#independent-eye-decisions').prop('checked', Hyperparams.evolveIndependentEyeDecisions);
+        
         if (!Hyperparams.useGlobalMutability) {
             $('.global-mutation-container').css('display', 'none');
             $('#avg-mut').css('display', 'block');

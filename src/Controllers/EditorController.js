@@ -246,12 +246,16 @@ class EditorController extends CanvasController{
 
         let eyeOptions = '';
         for (let i = 0; i < org.brain.eye_cell_count; i++) {
-            eyeOptions += `<option value="${i}">Eye ${i + 1}</option>`;
+            eyeOptions += `<option value="${i}">Eye ${i}</option>`;
         }
 
         brainInfo.html(`
             <h2>Brain</h2>
-            <label for="eye-select">Viewing Decisions for</label>
+            <span id="independent-eye-container" style="margin-left:8px; display:inline-flex; align-items:center; height:26px;">
+                <span>Independent Eye Decisions</span>
+                <input type="checkbox" id="independent-eye-checkbox" style="margin-left:4px;" title="When on, each eye cell has its own independent set of decisions." ${org.brain.independent_eye_decisions ? 'checked' : ''}>
+            </span>
+            <label id="eye-select-label" for="eye-select">Viewing Decisions for</label>
             <select id="eye-select">${eyeOptions}</select>
         `);
         
@@ -260,6 +264,29 @@ class EditorController extends CanvasController{
         $('#eye-select').change(() => {
             this.generateDecisionMaps(parseInt($('#eye-select').val()));
         });
+
+        // toggle independent eye decisions checkbox handler
+        $('#independent-eye-checkbox').off('change').change(() => {
+            const checked = $('#independent-eye-checkbox').is(':checked');
+            org.brain.setIndependentEyeDecisions(checked);
+            // refresh eye options visibility
+            if (checked) {
+                $('#eye-select').show();
+                $('#eye-select-label').show();
+            } else {
+                $('#eye-select').hide();
+                $('#eye-select-label').hide();
+                $('#eye-select').val('0');
+                this.generateDecisionMaps(0);
+            }
+            this.updateBrainSummary();
+        });
+
+        // initialize visibility based on current mode
+        if (!org.brain.independent_eye_decisions) {
+            $('#eye-select').hide();
+            $('#eye-select-label').hide();
+        }
 
         // Brain controls: Add State button and Current State selector
         const controls = $('<div id="brain-editor-controls" style="margin-top:5px;display:flex;align-items:center;gap:10px;"></div>');

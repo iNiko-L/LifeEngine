@@ -458,7 +458,7 @@ input:hover,input:active {
 .tab .right-half {
     overflow-y: auto;
     overflow-x: hidden;
-    height: 220px;
+    height: 230px;
 }
 
 /* Brain Decision Map Styles */

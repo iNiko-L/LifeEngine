@@ -92,10 +92,22 @@ class Renderer {
         if (cell.state.color === 'yellow') {
             color = 'red';
         }
+        const x = Math.round(cell.x);
+        const y = Math.round(cell.y);
+        const size = Math.round(this.cell_size);
+        this.ctx.fillStyle = color;
         this.ctx.strokeStyle = color;
-        this.ctx.lineWidth = this.cell_size * 0.2;
-        this.ctx.strokeRect(cell.x + this.cell_size * 0.1, cell.y + this.cell_size * 0.1, 
-            this.cell_size * 0.8, this.cell_size * 0.8);
+
+        if (size <= 2) {
+            // Small cells: fill entire cell
+            this.ctx.fillRect(x, y, size, size);
+        } else {
+            // 1-pixel border entirely inside the cell
+            this.ctx.fillRect(x, y, size, 1); // top
+            this.ctx.fillRect(x, y + size - 1, size, 1); // bottom
+            this.ctx.fillRect(x, y, 1, size); // left
+            this.ctx.fillRect(x + size - 1, y, 1, size); // right
+        }
         this.highlighted_cells.add(cell);
     }
 

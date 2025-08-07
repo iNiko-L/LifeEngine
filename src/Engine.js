@@ -82,13 +82,21 @@ class Engine {
                     this.step_head = 0;
                 }
 
-                // Max Steps Safety Check
+                // the below failsafes are based on experimentation
+                // they try to catch cases that would cause the sim to stall, while also packing in as many updates as possible
+
+                // at low actual fps, don't bother packing updates
+                if ((Date.now() - start_time) / steps > 1000 / 60) {
+                    this.accum_ms = 0;
+                    break;
+                }
+                // otherwise we can try packing more steps, but only if we're not stalling
                 if (steps > SAFE_STEPS_PER_TICK) {
                     // if steps have taken less time than expected, we can afford to take more steps
                     if (Date.now() - start_time < this.step_ms*steps && steps < MAX_STEPS_PER_TICK)
                         continue;
 
-                    // otherwise we will start stalling, so stop the loop
+                    // otherwise we are stalling, so stop the loop
                     this.accum_ms = 0; // drop excess time debt
                     break;
                 }
