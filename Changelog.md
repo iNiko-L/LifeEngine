@@ -1,12 +1,20 @@
 # Changelog
 
-## 1.0.6 (ongoing)
+## 1.0.6 (8/07/2025)
 
 ### UI Enhancements:
-- Added ability to change species name via UI
+- Different color schemes
+- Can change species name via UI
+- Always in 'edit' mode when viewing organisms
+- New brain editor
 
 ### Simulation Enhancements:
-- 
+- ~2x speed boost with update packing
+- Expanded brain system to have multiple brain states and different decisions for different eyes
+- New evolution controls:
+    - `Don't kill same species`: Don't kill organisms of the same species
+    - `Mutation Symmetry Probability`: Probability of new cells also being added in mirrored positions
+    - `Enable independent eye decisions`: Controls whether eyes can make their own decisions or follow the brain's decision
 
 ## 1.0.5 (4/23/2023)
 
