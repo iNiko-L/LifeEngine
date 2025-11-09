@@ -58,6 +58,7 @@ const FossilRecord = {
         delete this.extant_species[species.name];
         if (species.cumulative_pop >= this.min_discard) {
             // TODO: store as extinct species
+            this.extinct_species[species.name] = species;
             return true;
         }
         return false;
@@ -79,16 +80,34 @@ const FossilRecord = {
         this.av_mut_rates = [];
         this.av_cells = [];
         this.av_cell_counts = [];
+
+        this.species_pop_counts = []; //47392037
         this.updateData();
     },
 
     updateData() {
+        if (!this.env) return;
+
         var tick = this.env.total_ticks;
+
+        // existing stats
         this.tick_record.push(tick);
         this.pop_counts.push(this.env.organisms.length);
         this.species_counts.push(this.numExtantSpecies());
         this.av_mut_rates.push(this.env.averageMutability());
         this.calcCellCountAverages();
+
+        // NEW: snapshot of species populations (computed from actual organisms)
+        var snapshot = {};
+        for (let org of this.env.organisms) {
+            if (!org.species || !org.species.name) continue;
+            var name = org.species.name;
+            if (!snapshot[name]) snapshot[name] = 0;
+            snapshot[name]++;
+        }
+        this.species_pop_counts.push(snapshot);
+
+        // trim history
         while (this.tick_record.length > this.record_size_limit) {
             this.tick_record.shift();
             this.pop_counts.shift();
@@ -96,8 +115,10 @@ const FossilRecord = {
             this.av_mut_rates.shift();
             this.av_cells.shift();
             this.av_cell_counts.shift();
+            this.species_pop_counts.shift(); // NEW
         }
     },
+
 
     calcCellCountAverages() {
         var total_org = 0;

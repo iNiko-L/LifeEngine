@@ -1,54 +1,77 @@
-const CellStates = require("../../Organism/Cell/CellStates");
 const FossilRecord = require("../FossilRecord");
 const ChartController = require("./ChartController");
 
 class CellsChart extends ChartController {
     constructor() {
-        super("Organism Size / Composition", 
-            "Avg. Number of Cells per Organism",
-            "Note: to maintain efficiency, species with very small populations are discarded when collecting cell statistics.");
+        super(
+            "Species Populations",
+            "Population",
+            "Shows the population of each species over time."
+        );
+        this.speciesNames = [];
     }
 
     setData() {
         this.clear();
-        //this.mouth, this.producer, this.mover, this.killer, this.armor, this.eye
-        this.data.push({
-                type: "line",
-                markerType: "none",
-                color: 'black',
-                showInLegend: true, 
-                name: "pop1",
-                legendText: "Avg. organism size",
-                dataPoints: []
+
+        const spHist = FossilRecord.species_pop_counts;
+
+        // If we don't have species data yet, do nothing (empty chart until data appears)
+        if (!spHist || spHist.length === 0) {
+            this.addAllDataPoints();
+            return;
+        }
+
+        // Collect all species that ever appeared
+        const nameSet = {};
+        for (let snap of spHist) {
+            for (let name in snap) {
+                nameSet[name] = true;
             }
-        );
-        for (var c of CellStates.living) {
+        }
+
+        this.speciesNames = Object.keys(nameSet);
+
+        if (this.speciesNames.length === 0) {
+            this.addAllDataPoints();
+            return;
+        }
+
+        // Optional: limit to first 4 species to keep it readable
+        this.speciesNames = this.speciesNames.slice(0, 4);
+
+        // One line per species (same pattern as original CellsChart)
+        for (let name of this.speciesNames) {
             this.data.push({
                 type: "line",
                 markerType: "none",
-                color: c.color,
-                showInLegend: true, 
-                name: c.name,
-                legendText: "Avg. " + c.name + " cells",
+                showInLegend: true,
+                legendText: name,
                 dataPoints: []
-            }
-        );
+            });
         }
+
         this.addAllDataPoints();
-
-
     }
 
     addDataPoint(i) {
-        var t = FossilRecord.tick_record[i];
-        var p = FossilRecord.av_cells[i];
-        this.data[0].dataPoints.push({x:t, y:p});
-        var j=1;
-        for (var name in FossilRecord.av_cell_counts[i]) {
-            var count = FossilRecord.av_cell_counts[i][name];
-            this.data[j].dataPoints.push({x:t,y:count})
-            j++;
+        const t = FossilRecord.tick_record[i];
+        const spHist = FossilRecord.species_pop_counts || [];
+        const snapshot = spHist[i] || {};
+
+        // If no species configured, nothing to do
+        if (!this.speciesNames || this.speciesNames.length === 0) {
+            return;
         }
+
+        // For each species, only add a point if it exists at this tick.
+        // This way: line starts when species appears and ends when extinct.
+        this.speciesNames.forEach((name, seriesIndex) => {
+            if (Object.prototype.hasOwnProperty.call(snapshot, name)) {
+                const y = snapshot[name];
+                this.data[seriesIndex].dataPoints.push({ x: t, y: y });
+            }
+        });
     }
 }
 
