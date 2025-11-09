@@ -81,7 +81,7 @@ const FossilRecord = {
         this.av_cells = [];
         this.av_cell_counts = [];
 
-        this.species_pop_counts = []; //47392037
+        this.species_pop_counts = []; 
         this.updateData();
     },
 
